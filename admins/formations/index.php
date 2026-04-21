@@ -2,128 +2,114 @@
 include "../../includes/config.inc.php";
 include "../../includes/db.inc.php";
 
-@session_start();
+include $arrConfig['dir_site'] . '/admins/adminverification.php';
 
-if (!isset($_SESSION["user"])) {
-    header("location: ../login.php");
-}
+$formations = my_query("SELECT * FROM formations ORDER BY beginning_date DESC");
 
-$statement = "SELECT * FROM formations";
-$formations = my_query($statement);
-
-function format_date($value)
-{
-    if ($value == null) {
-        return "Dado não inserido";
-    }
-
-    $time = strtotime($value);
-
-    return date("d-m-Y", $time);
+function format_date($value) {
+    if ($value == null) return '<span class="badge badge-gray">Sem data</span>';
+    return date("d/m/Y", strtotime($value));
 }
 ?>
-
 <!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>ASYDIM</title>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASYDIM Admin — Formações</title>
+    <meta name="description" content="Gestão de Formações">
+</head>
+<body>
+<?php include "../components/header.php"; ?>
+<script>document.getElementById('adm-page-title').textContent = 'Formações';</script>
 
-		<meta name="description" content="Formações de qualidade">
-		<meta name="keywords" content="Porto, Formações, Centro de formações, Vila Nova de Gaia, Asydim, Asdim, Asydm">
-		<meta name="author" content="Hugo Sousa">
+<div class="adm-page-header">
+    <div>
+        <h1>Formações</h1>
+        <p style="color:var(--text-muted);margin:4px 0 0;font-size:0.9rem;"><?php echo count($formations); ?> formação(ões) encontrada(s)</p>
+    </div>
+    <a href="create.php" class="btn-primary">
+        <i class="ph ph-plus-circle"></i> Nova Formação
+    </a>
+</div>
 
-		<script src="https://cdn.tailwindcss.com"></script>
-		<script src="../../tailwind.config.js"></script>
-
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-	</head>
-	<body class="p-0 m-0 min-h-screen min-w-screen">
-        <?php include "../components/header.php"; ?>
-
-	    <div
-			class="flex flex-col w-full mt-32 px-32 items-center justify-center"
-		>
-            <div class="flex w-full items-center justify-end">
-                <a href="create.php" class="bg-primary py-2 px-5 rounded text-white transition ease-in-out hover:bg-secondary">
-                    Criar
-                </a>
-            </div>
-
-            <table class="w-full table-auto text-center mt-5 space-y-5">
-                <thead>
-                    <tr class="bg-primary text-white">
-                        <th>Nome</th>
-                        <th>Abreviatura</th>
-                        <th>Data início</th>
-                        <th>Data fim</th>
-                        <th>Horas</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($formations as $formation) { ?>
-                                <tr>
-                                    <td><a class="underline" href="show.php?id=<?php echo $formation[
-                                        "id"
-                                    ]; ?>"><?php echo $formation[
-    "name"
-]; ?></a></td>
-                                    <td><?php echo $formation["slug"]; ?></td>
-                                    <td><?php echo format_date(
-                                        $formation["beginning_date"]
-                                    ); ?></td>
-                                    <td><?php echo format_date(
-                                        $formation["ending_date"]
-                                    ); ?></td>
-                                    <td><?php echo $formation[
-                                        "duration"
-                                    ]; ?></td>
-                                    <td><a class="text-primary" href="edit.php?id=<?php echo $formation[
-                                        "id"
-                                    ]; ?>">Editar</a></td>
-                                </tr>
-                            <?php } ?>
-                </tbody>
-            </table>
+<div class="adm-table-card">
+    <?php if (empty($formations)): ?>
+        <div class="empty-state">
+            <i class="ph ph-graduation-cap"></i>
+            <p>Ainda não existem formações criadas.</p>
+            <a href="create.php" class="btn-primary" style="margin-top:20px;display:inline-flex;">Criar primeira formação</a>
         </div>
-       	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <?php else: ?>
+    <div class="table-header">
+        <h2>Lista de Formações</h2>
+    </div>
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Abreviatura</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Duração</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($formations as $f): ?>
+            <tr>
+                <td>
+                    <a href="show.php?id=<?php echo $f['id']; ?>" style="font-weight:600;color:var(--text);">
+                        <?php echo htmlspecialchars($f['name']); ?>
+                    </a>
+                </td>
+                <td><span class="badge badge-gray"><?php echo htmlspecialchars($f['slug']); ?></span></td>
+                <td><?php echo format_date($f['beginning_date']); ?></td>
+                <td><?php echo format_date($f['ending_date']); ?></td>
+                <td><span style="font-weight:600;"><?php echo $f['duration']; ?></span> h</td>
+                <td>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <a href="show.php?id=<?php echo $f['id']; ?>" class="btn-view"><i class="ph ph-eye"></i></a>
+                        <a href="edit.php?id=<?php echo $f['id']; ?>" class="btn-edit"><i class="ph ph-pencil"></i></a>
+                        <button onclick="confirmDelete('delete.php?id=<?php echo $f['id']; ?>')" class="btn-danger"><i class="ph ph-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+</div>
 
-		<?php
-  $error = $_GET["error"];
+    </div>
+</div>
 
-  if (!is_null($error) && $error == 0) {
-      echo '<script>window.onload = function() {
-				Swal.fire({
-                                                 title: "Operação completa com sucesso",
-                                                 icon: "success",
-                                                 toast: true,
-                                                 showConfirmButton: false,
-                                                 timer: 2000,
-                                                 timerProgressBar: true,
-                                                 position: "top",
-                                                 color: "#FFFFFF",
-                                                 background: "#4C9F70"
-                                             });
-                                         };</script>';
-  }
+<script>
+function confirmDelete(url) {
+    Swal.fire({
+        title: 'Eliminar formação?',
+        text: 'Esta ação não pode ser revertida.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#e05252',
+        cancelButtonColor: '#5a7d6a',
+    }).then(r => { if (r.isConfirmed) window.location.href = url; });
+}
 
-  if (!is_null($error) && $error == 1) {
-      echo '<script>window.onload = function() {
-				Swal.fire({
-                                                   title: "Data inválida",
-                                                   icon: "error",
-                                                   toast: true,
-                                                   showConfirmButton: false,
-                                                   timer: 2000,
-                                                   timerProgressBar: true,
-                                                   position: "top",
-                                                   color: "#FFFFFF",
-                                                   background: "#FCA5A5"
-                                               });
-                                           };</script>';
-  }
-  ?>
-	</body>
+<?php
+$error = isset($_GET['error']) ? (int)$_GET['error'] : -1;
+$toasts = [
+    0 => ['Operação realizada com sucesso!', 'success', '#00c96d'],
+    1 => ['Data inválida. O fim deve ser após o início.', 'error', '#e05252'],
+    2 => ['Erro no upload da imagem.', 'error', '#e05252'],
+];
+if (isset($toasts[$error])) {
+    [$msg, $icon, $bg] = $toasts[$error];
+    echo "window.onload=()=>Swal.fire({title:'$msg',icon:'$icon',toast:true,showConfirmButton:false,timer:3000,timerProgressBar:true,position:'top-end',color:'#fff',background:'$bg'});";
+}
+?>
+</script>
+</body>
 </html>

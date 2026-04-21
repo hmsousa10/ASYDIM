@@ -1,48 +1,82 @@
 <?php
 
+// ============================================================
+// ASYDIM — Authentication Script
+// ============================================================
+
 include '../../includes/config.inc.php';
 include '../../includes/db.inc.php';
 include '../../includes/functions.inc.php';
 
-@session_start();
+session_start();
 
-$email = $_POST['email'];
-$password = $_POST['password'];
-
-if(strlen(trim($email)) == 0) {
-    echo "Invalid email.";
-    die();
+// Only accept POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    die('Método não permitido.');
 }
 
-if(strlen($password) == 0 || strlen($password) > 9) {
-    echo $password;
+$email    = trim($_POST['email']   ?? '');
+$password = trim($_POST['password'] ?? '');
 
-    echo "Invalid password.";
-    die();
+// --- Input validation ---
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $_SESSION['auth_error'] = 'E-mail inválido.';
+    header('location: ' . $arrConfig['url_site'] . '/login.php');
+    exit();
 }
 
-$users = my_query("SELECT * FROM users WHERE email = '$email';");
-
-if(count($users) == 0) {
-    echo "Couldn't find user.";
-    die();
+if (empty($password)) {
+    $_SESSION['auth_error'] = 'Por favor insira a sua password.';
+    header('location: ' . $arrConfig['url_site'] . '/login.php');
+    exit();
 }
 
-if(!password_verify($password, $users[0]["password"])) {
-    echo "Couldn't find user.";
-    die();
+if (strlen($password) > 72) {
+    // bcrypt silently truncates at 72 bytes; explicitly reject to avoid confusion
+    $_SESSION['auth_error'] = 'Password demasiado longa.';
+    header('location: ' . $arrConfig['url_site'] . '/login.php');
+    exit();
 }
 
-$_SESSION['user'] = $users[0];
+// --- Look up user by email (parameterised) ---
+$users = my_query("SELECT * FROM users WHERE email = ?", [$email]);
 
-$statement = "SELECT * FROM roles WHERE id=" . $users[0]['role_id'];
-$role = my_query($statement)[0];
+if (empty($users) || !password_verify($password, $users[0]['password'])) {
+    // Generic message — don't reveal whether email exists
+    $_SESSION['auth_error'] = 'Credenciais inválidas.';
+    header('location: ' . $arrConfig['url_site'] . '/login.php');
+    exit();
+}
 
-$referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+$user = $users[0];
 
-if($role['permission_level'] <= 30 && strpos($referer, 'admins') !== false) {
+// --- Session regeneration to prevent session fixation ---
+session_regenerate_id(true);
+$_SESSION['user'] = $user;
+
+// --- Role-based redirect ---
+$role = my_query("SELECT * FROM roles WHERE id = ?", [(int)$user['role_id']]);
+
+if (empty($role)) {
+    session_destroy();
+    $_SESSION['auth_error'] = 'Erro interno. Contacte o administrador.';
+    header('location: ' . $arrConfig['url_site'] . '/login.php');
+    exit();
+}
+
+$role = $role[0];
+
+// Lower permission_level = higher privilege (Root=10, Admin=20, Tutor=30, Student=40)
+if ((int)$role['permission_level'] <= 20) {
     header('location: ' . $arrConfig['url_admin'] . '/index.php');
-    return;
+    exit();
+}
+
+if (isset($_GET['action']) && $_GET['action'] === 'register-formation') {
+    header('location: ' . $arrConfig['url_users'] . '/formations/associate.php');
+    exit();
 }
 
 header('location: ' . $arrConfig['url_users'] . '/index.php');
+exit();

@@ -1,37 +1,34 @@
 <?php
+
+// ============================================================
+// ASYDIM — Change Formation-User State (Admin)
+// ============================================================
+
 include "../../../includes/config.inc.php";
 include "../../../includes/db.inc.php";
 include "../../../includes/functions.inc.php";
 
-$id = $_GET["id"];
+if (session_status() === PHP_SESSION_NONE) session_start();
+include $arrConfig['dir_site'] . "/admins/adminverification.php";
 
-if ($id == null) {
-    header("location: ../../formations/index.php");
+$id = (int)($_GET['id'] ?? 0);
+
+if ($id <= 0) {
+    header("location: " . $arrConfig["url_admin"] . "/formations/index.php");
+    exit();
 }
 
-$statement = "SELECT * FROM formation_users WHERE id=" . $id;
-$formation = my_query($statement);
+$row = my_query("SELECT * FROM formation_users WHERE id = ?", [$id]);
 
-if (count($formation) == 0) {
-    header("location: ../../formations/index.php");
-    return;
+if (empty($row)) {
+    header("location: " . $arrConfig["url_admin"] . "/formations/index.php");
+    exit();
 }
 
-$nextState = 0;
-$formation = $formation[0];
+$row = $row[0];
+$nextState = $row['approved'] == 0 ? 1 : 0;
 
-if ($formation["approved"] == 0) {
-    $nextState = 1;
-} else {
-    $nextState = 0;
-}
+my_query("UPDATE formation_users SET approved = ? WHERE id = ?", [$nextState, $id]);
 
-$statement =
-    "UPDATE formation_users SET `approved`=" . $nextState . " WHERE id=" . $id;
-$updatedFormation = my_query($statement);
-
-header(
-    "location: ../../formations/show.php?id=" .
-        $formation["formation_id"] .
-        "&error=0"
-);
+header("location: " . $arrConfig["url_admin"] . "/formations/show.php?id=" . (int)$row['formation_id'] . "&error=0");
+exit();

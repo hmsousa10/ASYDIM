@@ -1,55 +1,68 @@
 <?php
 
 /**
- * This function takes care of returning an underline
- * class tag if the current page is equals to the
- * provided elements name
- *
- * @param string $name
- * @return string
+ * Checks if the current page matches the given name
+ * and returns the 'active' class if so
  */
-function checkPage($name) : void {
+function checkPage($name): string
+{
     $pageName = basename($_SERVER['PHP_SELF']);
-
-    if($pageName === $name)
-        echo 'underline underline-offset-8';
-
-    echo '';
+    if ($pageName === $name) return 'active';
+    return '';
 }
 
 ?>
 
-<header
-    class="w-full z-30 transition-all"
->
-    <nav class="max-w-screen-xl px-6 sm:px-8 lg:px-16 mx-auto grid grid-flow-col py-5 sm:py-4 mt-5">
-        <div class="col-start-1 col-end-2 flex items-center">
-            <a class="text-2xl uppercase font-bold" href="index.php">
-                <img src="assets/logo.png" alt="logo" class="w-16">
-            </p>
-        </div>
-        <ul class="hidden lg:flex col-start-4 col-end-8 text-black-500 space-x-10 items-center">
-            <a href="<?php echo $arrConfig['url_site'] ?>" class="<?php checkPage('index.php') ?> text-black-600 hover:text-primary ease-in-out transition-all">Inicio</a>
-            <a href="<?php echo $arrConfig['url_site'] . '/pages/about.php' ?>" class="<?php checkPage('about.php') ?> text-black-600 hover:text-primary ease-in-out transition-all">Sobre</a>
-            <a href="<?php echo $arrConfig['url_site'] . '/pages/formations.php' ?>" class="<?php checkPage('formations.php') ?> ref="#" class="text-black-600 hover:text-primary ease-in-out transition-all">Formações</a>
-            <a href="<?php echo $arrConfig['url_site'] . '/pages/contacts.php' ?>" class="<?php checkPage('contacts.php') ?> text-black-600 hover:text-primary ease-in-out transition-all">Contactos</a>
+<header class="nav-container" id="main-nav">
+    <nav class="nav-inner">
+        <a class="nav-brand" href="<?php echo $arrConfig['url_site'] ?>">
+            <img src="<?php echo $arrConfig['url_site'] ?>/assets/logo.png" alt="ASYDIM logo">
+        </a>
+
+        <ul class="nav-links" id="nav-menu">
+            <li><a href="<?php echo $arrConfig['url_site'] ?>" class="nav-link <?php echo checkPage('index.php') ?>">Início</a></li>
+            <li><a href="<?php echo $arrConfig['url_site'] . '/pages/about.php' ?>" class="nav-link <?php echo checkPage('about.php') ?>">Sobre</a></li>
+            <li><a href="<?php echo $arrConfig['url_site'] . '/pages/formation-categories.php' ?>" class="nav-link <?php echo checkPage('formation-categories.php') ?>">Formações</a></li>
+            <li><a href="<?php echo $arrConfig['url_site'] . '/pages/contacts.php' ?>" class="nav-link <?php echo checkPage('contacts.php') ?>">Contactos</a></li>
+            <li><a href="<?php echo $arrConfig['url_site'] . '/pages/faqs.php' ?>" class="nav-link <?php echo checkPage('faqs.php') ?>">Ajuda</a></li>
+            <li><a href="<?php echo $arrConfig['url_site'] . '/login.php' ?>" class="nav-cta">Entrar</a></li>
         </ul>
-        <div class="col-start-10 col-end-12 font-medium flex space-x-6 justify-end items-center">
-            <a href="<?php echo $arrConfig['url_site'] . '/users/login.php' ?>" class="text-black-600 mx-2 sm:mx-4 capitalize tracking-wide font-semibold hover:text-primary ease-in-out transition-all">
-                Entrar
-            </a>
-            <a href="#" class="border border-secondary px-10 py-3 rounded-full font-semibold  transition ease-in-out hover:bg-secondary hover:text-white hover:shadow-lg hover:shadow-primary">
-                Participe
-            </a>
-        </div>
+
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
 </header>
 
-<nav class="fixed lg:hidden bottom-0 left-0 right-0 z-20 px-4 sm:px-8 shadow-t ">
-    <div class="bg-white-500 sm:px-3">
-        <ul class="flex w-full justify-between items-center text-black-500">
-            <p>Hello,</p>
-			<p>Hello 2</p>
-		</ul>
-	</div>
-</nav>
+<script>
+    // Mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        document.getElementById('nav-menu').classList.toggle('open');
+    });
+
+    // Navbar scroll effect
+    const nav = document.getElementById('main-nav');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 60) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    });
+
+    // Scroll reveal
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    });
+</script>

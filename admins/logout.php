@@ -1,6 +1,5 @@
 <?php
-
-@session_start();
-unset($_SESSION['user']);
-
-header("location: login.php");
+include '../includes/config.inc.php';
+session_destroy();
+header('location: ' . $arrConfig['url_site'] . '/login.php');
+exit();

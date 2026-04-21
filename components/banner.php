@@ -1,12 +1,21 @@
-<section class="mt-16 h-96 mx-auto">
-    <div class="w-full h-full justify-items-center align-middle space-between align-center">
-        <div class="flex flex-col justify-center items-center">
-            <h1 class="text-5xl tracking-wide"><strong class="text-secondary">Invista</strong> no seu <strong class="text-secondary">futuro</strong>, hoje</h1>
-            <p class="mt-3">Impulsionando o Futuro Sustentável: Conhecimento, Inovação, Solução</p>
-
-            <a href="#" class="mt-10 w-64 text-lg text-center border border-secondary px-10 py-3 rounded-md font-semibold bg-secondary text-white transition-all ease-in-out hover:shadow-lg hover:shadow-primary">
-                Comece já
-            </a>
-        </div>
-    </div>
+<section class="hero-content" style="margin-top: 80px;">
+    <h1 class="hero-title">
+        <span class="highlight">Invista</span> no seu <span class="highlight">futuro</span>, hoje
+    </h1>
+    <p class="hero-subtitle">Impulsionando o Futuro Sustentável: Conhecimento, Inovação, Solução</p>
+    <a href="#cursos" class="btn-primary">
+        <span>Comece já</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
 </section>
+
+<div class="particles">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+</div>

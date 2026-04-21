@@ -1,30 +1,52 @@
 <?php
+
+// ============================================================
+// ASYDIM — Edit User (Admin)
+// ============================================================
+
 include "../../../includes/config.inc.php";
 include "../../../includes/db.inc.php";
 include "../../../includes/functions.inc.php";
 
-@session_start();
+if (session_status() === PHP_SESSION_NONE) session_start();
+include $arrConfig['dir_site'] . "/admins/adminverification.php";
 
-$id = $_GET["id"];
-
-$name = $_POST["name"];
-$email = $_POST["email"];
-$phone = $_POST["phone"];
-$role = $_POST["role"];
-
-$role_query = my_query("SELECT * FROM roles WHERE id = $role");
-
-if ($role_query <= 0) {
-    header("location: " . $arrConfig["url_admin"] . "/users/index.php?error=1");
-    return;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    exit();
 }
 
-if ($name == "" || $email == "") {
+$id    = (int)($_GET['id'] ?? 0);
+$name  = trim($_POST['name']  ?? '');
+$email = trim($_POST['email'] ?? '');
+$phone = trim($_POST['phone'] ?? '');
+$role  = (int)($_POST['role'] ?? 0);
+
+if ($id <= 0) {
+    header("location: " . $arrConfig["url_admin"] . "/users/index.php");
+    exit();
+}
+
+if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     header("location: " . $arrConfig["url_admin"] . "/users/index.php?error=2");
-    return;
+    exit();
 }
 
-$statement = "UPDATE `users` SET `name`='$name', `email`='$email', `phone`='$phone', `role_id`=$role WHERE id = $id";
-$query = my_query($statement);
+$role_query = my_query("SELECT * FROM roles WHERE id = ?", [$role]);
+if (empty($role_query)) {
+    header("location: " . $arrConfig["url_admin"] . "/users/index.php?error=1");
+    exit();
+}
+
+$result = my_query(
+    "UPDATE users SET name = ?, email = ?, phone = ?, role_id = ? WHERE id = ?",
+    [$name, $email, $phone, $role, $id]
+);
+
+if (!$result) {
+    header("location: " . $arrConfig["url_admin"] . "/users/index.php?error=4");
+    exit();
+}
 
 header("location: " . $arrConfig["url_admin"] . "/users/index.php?error=0");
+exit();
